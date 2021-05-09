@@ -1,0 +1,236 @@
+
+<html lang="en" class="js-focus-visible" data-js-focus-visible="">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    Ransack - Ayelén Gora
+  </title>
+  <link rel="stylesheet" href="/styles.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+
+  <meta name="generator" content="Jekyll v3.9.0">
+  <meta property="og:title" content="Ransak">
+  <meta name="author" content="Santiago Llapur">
+
+  <style type="text/css">
+    @font-face {
+      font-weight: 400;
+      font-style: normal;
+      font-family: 'Circular-Loom';
+
+      src: url('https://cdn.loom.com/assets/fonts/circular/CircularXXWeb-Book-cd7d2bcec649b1243839a15d5eb8f0a3.woff2') format('woff2');
+    }
+
+    @font-face {
+      font-weight: 500;
+      font-style: normal;
+      font-family: 'Circular-Loom';
+
+      src: url('https://cdn.loom.com/assets/fonts/circular/CircularXXWeb-Medium-d74eac43c78bd5852478998ce63dceb3.woff2') format('woff2');
+    }
+
+    @font-face {
+      font-weight: 700;
+      font-style: normal;
+      font-family: 'Circular-Loom';
+
+      src: url('https://cdn.loom.com/assets/fonts/circular/CircularXXWeb-Bold-83b8ceaf77f49c7cffa44107561909e4.woff2') format('woff2');
+    }
+
+    @font-face {
+      font-weight: 900;
+      font-style: normal;
+      font-family: 'Circular-Loom';
+
+      src: url('https://cdn.loom.com/assets/fonts/circular/CircularXXWeb-Black-bf067ecb8aa777ceb6df7d72226febca.woff2') format('woff2');
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="post-title">Ransack</h1>
+
+    <p>Ransak es una Gema que le permite a las aplicaciones web de Ruby On Rails la creación de formularios de búsqueda,
+      ya
+      sean estos simples o avanzados y también nos da la posibilidad de agregarles sort_links para ordenarlo por algúna
+      de sus
+      propiedades.</p>
+
+    <h1>Setup:</h1>
+    <p>En pricipio debes instalar la gema </p>
+    <code>
+      <div class="language-ruby highlighter-rouge">
+        <div class="highlight">
+          <pre class="highlight">      #./Gemfile.rb</span>
+            <span>gem 'ransack', '~> 2.4', '>= 2.4.1'</span>
+        </div>
+      </div>
+    </code>
+
+    <h3>Búsqueda Modo Simple</h3>
+
+    <p>Hay dos maneras de utilizar la gema Ransak, en principio veremos el modo simple que es el que se utiliza cuando
+      no se necesita una lógica booleana compleja</p>
+    <p>Vamos a poner un ejemplo particular en el cual se realizará la búsqueda de un producto, por lo cúal endremos que
+      a ir a
+      buscar dentro del modelo Products y para ésto iremos al ProductsController y en este caso la búsqueda se realizará
+      en la
+      acción INDEX dónde Product.search nos estrá invocando un objeto de búsqueda al cual le pasaremos como parametro :q
+      que
+      será un hash con lo que haya querído buscar el usuario.
+      Entonces, en resumidas palabras product.search(params[:q]) nos estará invocando la búsqueda del usuario y si a ese
+      resultado le ejecutamos .result estaremos recuperando la colección de productos que cumplan con los argumentos de
+      búsqueda que pasó el usuarios</p>
+    <code>
+      <div class="language-ruby highlighter-rouge">
+        <div class="highlight">
+          <pre class="highlight"># /app/controllers/products_controller.rb code</span>
+            <br>
+            <span>class ProductsController < ApplicationController</span>
+            <span>  def index</span>
+            <span>    @search = Product.search(params[:q])</span>
+            <span>    @products = @search.result</span>
+            <span>  end</span>
+            <span>end</span>
+        </div>
+      </div>
+    </code>
+
+    <p>Luego será necesario construir el formulario para que el usuario pueda ejecutar esta búqueda y para ésto Ransak
+      nos
+      ofrece el constructor de formularios search_form_for en remplazo del conocido form_for.</p>
+    <code>
+      <div class="language-ruby highlighter-rouge">
+        <div class="highlight">
+          <pre class="highlight"># /app/views/products/index.html.erb</span>
+            <br>
+            <span> <%= search_form_for @search do |f| %></span>
+            <br>
+            <span>    # Search if the name field contains...</span>
+            <span>    <%= f.label :name_cont %></span>
+            <span>    <%= f.search_field :name_cont %></span>
+            <br>
+            <span>    # También se puede realizar la busqueda de un valor en varios atributos por ejemplo...</span>
+            <span>    <%= f.label :name_or_description_or_email_or_title_cont %></span>
+            <span>    <%= f.search_field :name_or_description_or_email_or_title_cont %></span>
+            <br>
+            <span>    <%= f.submit %></span>
+            <span> <%= end %></span>
+        </div>
+      </div>
+    </code>
+    <p>El argumento de <strong>f.search_field</strong> tiene que llevar el siguiente formato->
+      <strong>:nombre_del_atributo_predicado</strong> y es de suma
+      importancia destacar que los nombres de estos campos deben ser los nombres de los atributos del modelo para poder
+      definir correctamente su funcionalidad.</p>
+    <p>Ransak nos da un listado de predicados los cuales podemos utilizar por ejemplo name_cont nos buscará los
+      productos cuyo
+      nombre contenga el valor introducido en este campo, name_start nos traerá los productos cuyo nombre comience con
+      el
+      valor introducido en este campo, y si por ejemplo queremos buscar productos que tengan un precio minimo y un
+      precio
+      máximo debemos especificarlo en los campos con las siguientes etiquetas price_gteq para el capo del valor minimo y
+      price_lteq para el precio maximo:</p>
+    <code>
+          <div class="language-ruby highlighter-rouge">
+            <div class="highlight">
+              <pre class="highlight"># /app/views/products/index.html.erb</span>
+                <br>
+                <span> <%= search_form_for @search do |f| %></span>
+                <br>
+                <span>    <%= f.label :name_cont, "Name contains" %></span>
+                <span>    <%= f.text_field :name_cont %></span>
+                <br>
+                <span>    <%= f.label :price_gteq, "Price between" %></span>
+                <span>    <%= f.text_field :price_gteq %></span>
+                <span>    <%= f.label :price_lteq, "and" %></span>
+                <span>    <%= f.text_field :price_lteq %></span>
+                <br>
+                <span>    <%= f.submit %></span>
+                <span> <%= end %></span>
+            </div>
+          </div>
+        </code>
+    <p>El listado de todos los predicados que se puede utilizar esta aqui:</p>
+    <a href="https://github.com/activerecord-hackery/ransack/wiki/Basic-Searching">Predicados mas utilizados</a>
+    <h2>Sort_link</h2>
+    <p>Por otro lado ransak nos permite poner links que nos ordenen los resultados, para ésto debemos utilizar un helper
+      llamado sort_link el cúal creará en la cabecera de la tabla un link que ordenará los resultados.</p>
+    <p>La manera mas simple de hacer ésto es:</p>
+    <code>
+    <div class="language-ruby highlighter-rouge">
+      <div class="highlight">
+        <pre class="highlight"># /app/views/products/index.html.erb</span>
+          <span> <%= search_form_for @search do |f| %></span>
+          <br>
+          <span>  # Pero si quiseramos especificarle el texto que aparecerá en el link ej:Nombre y el orden de la busqueda en descendente
+          deberiamos hacer algo como lo siguiente:</span>
+          <span>  <%= sort_link(@q, :name, 'Nombre' , default_order: :desc) %></span>
+          <br>
+          <span> # Ésto indefectiblemente nos pondrá una flecha descendentie al lado del link, si queremos que ese icono desaparezca
+          debemos hacer lo siguiente:</span>
+          <span>    <%= sort_link(@q, :name, hide_indicator: true) %></span>
+          <br>
+      </div>
+    </div>
+  </code>
+
+    <h3>Búsqueda Modo Avanzado</h3>
+    <p>Para crear un formulario de búsqueda dinámica cónde el usuario tenga total control sobre las columnas y
+      predicados a
+      usar es necesario crer un método llamado condition_fields en el constructor del formulario, de modo que éste
+      creará otro
+      constructor de formulario para cada una de las condiciones de búsqueda que el usuario intente realizar.
+      Para que ésto funcione debemos agregarle al ProductsController que habia visto en el modo simple de utilizar
+      Ransak una
+      linea, ya que las búsquedas no tienen condiciones por lo que tenemos que añadir una vacía:</p>
+    <code>
+      <div class="language-ruby highlighter-rouge">
+        <div class="highlight">
+          <pre class="highlight"># /app/controllers/products_controller.rb</span>
+            <span> class ProductsController < ApplicationController</span>
+            <span>   def index</span>
+            <span>     @search = Product.search(params[:q])</span>
+            <span>     @products = @search.result</span>
+            <span>     @search.build_condition <----------</span>
+            <span>   end</span>
+            <span>end</span>
+        </div>
+      </div>
+    </code>
+    <p>En la View se deberá recorrer cada uno de los campos de attribute_fields y mostramos el attribute_select para
+      cada uno
+      de ellos, tras lo que mostramos los campos para el predicado y el valor. Todo esto según las opciones que quiera
+      buscar
+      el usuario.</p>
+    <code>
+      <div class="language-ruby highlighter-rouge">
+        <div class="highlight">
+          <pre class="highlight"># /app/views/products/index.html.erb</span>
+            <span> <%= search_form_for @search do |f| %></span>
+            <span>   <%= f.condition_fields do |c| %>:</span>
+            <span>     <%= c.attribute_fields do |a| %></span>
+            <span>       <%= a.attribute_select %></span>
+            <span>     <% end %></span>
+            <span>     <%= c.predicate_select %></span>
+            <span>     <%= c.value_fields do |v| %></span>
+            <span>       <%= v.text_field :value %></span>>
+            <span>     <% end %> </span>
+            <span>     <%= f.submit "Search" %></span>
+            <span>  <% end %> </span>
+            <span> <% end %> </span>
+        </div>
+      </div>
+    </code>
+    <p>Entonces el usuario podrá elegir el atributo del producto en el cual buscar, por elemplo si desea buscar por el
+      nombre
+      del producto, luego puede elegir que predicado el predicado, es decir si el nombre contiene y luego un campo en el
+      cual
+      puede escribir el nombre del producto especifico que quiere buscar.
+    </p>
+  </div>
